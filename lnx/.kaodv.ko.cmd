@@ -1,0 +1,1 @@
+cmd_/home/wu/Desktop/edison/aodv/aodv-uu/lnx/kaodv.ko := i586-poky-linux-ld -r -m elf_i386 -T /home/wu/Desktop/edison/kernel/linux-edison-standard-build/scripts/module-common.lds --build-id  -o /home/wu/Desktop/edison/aodv/aodv-uu/lnx/kaodv.ko /home/wu/Desktop/edison/aodv/aodv-uu/lnx/kaodv.o /home/wu/Desktop/edison/aodv/aodv-uu/lnx/kaodv.mod.o

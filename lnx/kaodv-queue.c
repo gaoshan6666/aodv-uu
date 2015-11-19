@@ -39,6 +39,7 @@
 #include "kaodv-netlink.h"
 #include "kaodv-ipenc.h"
 #include "kaodv.h"
+#include "kaodv-debug.h"
 /*
  * This is basically a shameless rippoff of the linux kernel's ip_queue module.
  */
@@ -64,7 +65,8 @@ struct kaodv_queue_entry {
 typedef int (*kaodv_queue_cmpfn) (struct kaodv_queue_entry *, unsigned long);
 
 static unsigned int queue_maxlen = KAODV_QUEUE_QMAX_DEFAULT;
-static rwlock_t queue_lock = RW_LOCK_UNLOCKED;
+DEFINE_RWLOCK(queue_lock);
+
 static unsigned int queue_total;
 static LIST_HEAD(queue_list);
 
@@ -287,6 +289,7 @@ static int kaodv_queue_get_info(char *buffer, char **start, off_t offset, int le
 	return len;
 }
 #else
+/*
 static int kaodv_queue_get_info(char *page, char **start, off_t off, int count,
                     int *eof, void *data)
 {
@@ -307,11 +310,63 @@ static int kaodv_queue_get_info(char *page, char **start, off_t off, int count,
 	else if (len < 0)
 		len = 0;
 	return len;
+}*/
+static int kaodv_queue_get_info(struct seq_file *m, void *v)
+{
+	read_lock_bh(&queue_lock);
+
+	seq_printf(m,
+		      "Queue length      : %u\n"
+		      "Queue max. length : %u\n", queue_total, queue_maxlen);
+
+	read_unlock_bh(&queue_lock);
+
+	return 0;
 }
 #endif
 
+static int kaodv_queue_proc_open(struct inode *inode, struct file *file)
+{
+        int (*show)(struct seq_file *, void *) = PDE_DATA(inode);
+        return single_open(file, show, NULL);
+}
+
+static const struct file_operations kaodv_queue_proc_fops = {
+	.open           = kaodv_queue_proc_open,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+	.release        = single_release,
+};
+
+////https://groups.google.com/forum/#!topic/fa.linux.kernel/5o6yX-0omnI
+////http://tuxthink.blogspot.com/2013/10/creating-read-only-proc-entry-in-kernel.html
+//static int kaodv_read_proc(struct seq_file *m, void *v)
+//{
+//
+//    seq_printf(m,
+//        "qual threshold=%d\npkts dropped=%lu\nlast qual=%d\ngateway_mode=%d\n",
+//        qual_th, pkts_dropped, qual, is_gateway);
+//
+//    return 0;
+//}
+
+/*
+ * Table of proc files we need to create.
+ */
+struct kaodv_queue_proc_file {
+	char name[12];
+	int (*show)(struct seq_file *, void *);
+};
+
+static const struct kaodv_queue_proc_file kaodv_queue_proc_files[] = {
+	{ KAODV_QUEUE_PROC_FS_NAME,   &kaodv_queue_get_info },
+	{ "" }
+};
+
+
 static int init_or_cleanup(int init)
 {
+	const struct kaodv_queue_proc_file *f;
 	int status = -ENOMEM;
 	struct proc_dir_entry *proc;
 
@@ -323,7 +378,14 @@ static int init_or_cleanup(int init)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc = proc_net_create(KAODV_QUEUE_PROC_FS_NAME, 0, kaodv_queue_get_info);
 #else
-	proc = create_proc_read_entry(KAODV_QUEUE_PROC_FS_NAME, 0, init_net.proc_net, kaodv_queue_get_info, NULL);
+	//proc = create_proc_read_entry(KAODV_QUEUE_PROC_FS_NAME, 0, init_net.proc_net, kaodv_queue_get_info, NULL);
+	//proc = proc_create(KAODV_QUEUE_PROC_FS_NAME, 0, init_net.proc_net, kaodv_queue_get_info);
+	for (f = kaodv_queue_proc_files; f->name[0]; f++) {
+		if (!proc_create_data(f->name, 0, init_net.proc_net,
+				&kaodv_queue_proc_fops, f->show)) {
+			KAODV_DEBUG("Could not create kaodv queue proc entry");
+		}
+	}
 #endif
 	if (!proc) {
 	  printk(KERN_ERR "kaodv_queue: failed to create proc entry\n");
@@ -337,22 +399,22 @@ static int init_or_cleanup(int init)
 	return 1;
 	
  cleanup:
-#ifdef KERNEL26
+//#ifdef KERNEL26
 	synchronize_net();
-#endif
+//#endif
 	kaodv_queue_flush();
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc_net_remove(KAODV_QUEUE_PROC_FS_NAME);
 #else
-	proc_net_remove(&init_net, KAODV_QUEUE_PROC_FS_NAME);
+	//proc_net_remove(&init_net, KAODV_QUEUE_PROC_FS_NAME);
+	remove_proc_entry(KAODV_QUEUE_PROC_FS_NAME, init_net.proc_net);
 #endif
 	return status;
 }
 
 int kaodv_queue_init(void)
 {
-
 	return init_or_cleanup(1);
 }
 

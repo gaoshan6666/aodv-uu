@@ -37,7 +37,8 @@
 #define EXPL_MAX_LEN 1024
 
 static unsigned int expl_len;
-static rwlock_t expl_lock = RW_LOCK_UNLOCKED;
+//static rwlock_t expl_lock = RW_LOCK_UNLOCKED;
+DEFINE_RWLOCK(expl_lock);
 static LIST_HEAD(expl_head);
 
 #define list_is_first(e) (&e->l == expl_head.next)
@@ -268,6 +269,7 @@ int kaodv_expl_add(__u32 daddr, __u32 nhop, unsigned long time,
 	return status;
 }
 
+/*
 static int kaodv_expl_print(char *buf)
 {
 	struct list_head *pos;
@@ -322,6 +324,7 @@ static int kaodv_expl_print(char *buf)
 	read_unlock_bh(&expl_lock);
 	return len;
 }
+*/
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 static int
 kaodv_expl_proc_info(char *buffer, char **start, off_t offset, int length)
@@ -339,6 +342,7 @@ kaodv_expl_proc_info(char *buffer, char **start, off_t offset, int length)
 	return len;
 }
 #else
+/*
 static int kaodv_expl_proc_info(char *page, char **start, off_t off, int count,
                     int *eof, void *data)
 {
@@ -353,8 +357,89 @@ static int kaodv_expl_proc_info(char *page, char **start, off_t off, int count,
 	else if (len < 0)
 		len = 0;
 	return len;
-}
+}*/
+static int kaodv_expl_proc_info(struct seq_file *m, void *v)
+{
+
+	struct list_head *pos;
+	read_lock_bh(&expl_lock);
+
+	seq_printf(m, "# Total entries: %u\n", expl_len);
+	seq_printf(m, "# %-15s %-15s %-5s %-5s Expires\n",
+		       "Addr", "Nhop", "Flags", "Iface");
+
+	list_for_each(pos, &expl_head) {
+		char addr[16], nhop[16], flags[4];
+		struct net_device *dev;
+		int num_flags = 0;
+		struct expl_entry *e = (struct expl_entry *)pos;
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
+		dev = dev_get_by_index(e->ifindex);
+#else
+		dev = dev_get_by_index(&init_net, e->ifindex);
 #endif
+
+		if (!dev)
+			continue;
+
+		sprintf(addr, "%d.%d.%d.%d",
+			0x0ff & e->daddr,
+			0x0ff & (e->daddr >> 8),
+			0x0ff & (e->daddr >> 16), 0x0ff & (e->daddr >> 24));
+
+		sprintf(nhop, "%d.%d.%d.%d",
+			0x0ff & e->nhop,
+			0x0ff & (e->nhop >> 8),
+			0x0ff & (e->nhop >> 16), 0x0ff & (e->nhop >> 24));
+
+		if (e->flags & KAODV_RT_GW_ENCAP)
+			flags[num_flags++] = 'E';
+
+		if (e->flags & KAODV_RT_REPAIR)
+			flags[num_flags++] = 'R';
+
+		flags[num_flags] = '\0';
+
+		seq_printf(m, "  %-15s %-15s %-5s %-5s %lu\n",
+			       addr, nhop, flags, dev->name,
+			       (e->expires - jiffies) * 1000 / HZ);
+
+		dev_put(dev);
+	}
+
+	read_unlock_bh(&expl_lock);
+    return 0;
+}
+
+#endif
+
+static int kaodv_expl_proc_open(struct inode *inode, struct file *file)
+{
+        int (*show)(struct seq_file *, void *) = PDE_DATA(inode);
+        return single_open(file, show, NULL);
+}
+
+static const struct file_operations kaodv_expl_proc_fops = {
+	.open           = kaodv_expl_proc_open,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+	.release        = single_release,
+};
+
+/*
+ * Table of proc files we need to create.
+ */
+struct kaodv_expl_proc_file {
+	char name[12];
+	int (*show)(struct seq_file *, void *);
+};
+
+static const struct kaodv_expl_proc_file kaodv_expl_proc_files[] = {
+	{ "kaodv-expl",   &kaodv_expl_proc_info },
+	{ "" }
+};
+
 
 int kaodv_expl_update(__u32 daddr, __u32 nhop, unsigned long time,
 		      unsigned short flags, int ifindex)
@@ -407,11 +492,19 @@ void kaodv_expl_flush(void)
 
 void kaodv_expl_init(void)
 {
+	const struct kaodv_expl_proc_file *f;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc_net_create("kaodv_expl", 0, kaodv_expl_proc_info);
 #else
-	create_proc_read_entry("kaodv_expl", 0, 
-			       init_net.proc_net, kaodv_expl_proc_info, NULL);
+//	create_proc_read_entry("kaodv_expl", 0,
+//			       init_net.proc_net, kaodv_expl_proc_info, NULL);
+//	proc_create("kaodv_expl", 0, init_net.proc_net, &kaodv_expl_fops);
+	for (f = kaodv_expl_proc_files; f->name[0]; f++) {
+		if (!proc_create_data(f->name, 0, init_net.proc_net,
+				&kaodv_expl_proc_fops, f->show)) {
+			KAODV_DEBUG("Could not create kaodv-expl proc entry");
+		}
+	}
 #endif
 
 	expl_len = 0;
@@ -426,6 +519,7 @@ void kaodv_expl_fini(void)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc_net_remove("kaodv_expl");
 #else
-	proc_net_remove(&init_net, "kaodv_expl");
+	//proc_net_remove(&init_net, "kaodv_expl");
+	remove_proc_entry("kaodv_expl", init_net.proc_net);
 #endif
 }

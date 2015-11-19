@@ -18,25 +18,27 @@ OBJS_MIPS = $(SRC:%.c=%-mips.o)
 OBJS_NS = $(SRC_NS:%.c=%-ns.o)
 OBJS_NS_CPP = $(SRC_NS_CPP:%.cc=%-ns.o)
 
-KERNEL=$(shell uname -r)
+#KERNEL=$(shell uname -r)
+KERNEL=3.10.17-yocto-standard
 # Change to compile against different kernel (can be overridden):
-KERNEL_DIR=/lib/modules/$(KERNEL)/build
+#KERNEL_DIR=/lib/modules/$(KERNEL)/build
+KERNEL_DIR=/home/wu/Desktop/edison/kernel/linux-edison-standard-build
 KERNEL_INC=$(KERNEL_DIR)/include
 
 # Compiler and options:
 # ##### for RCP use: big-endian
-CC=gcc
-LD=ld
+#CC=gcc
+#LD=ld
 ARM_CC=arm-linux-gcc
 ARM_CCFLAGS=-mbig-endian
 ARM_LD=arm-linux-ld
 MIPS_CC=mipsel-linux-gcc
 MIPS_LD=mipsel-linux-ld
-CPP=g++
+#CPP=g++
 OPTS=-Wall -O3
 CPP_OPTS=-Wall
 
-export CC ARM_CC MIPS_CC
+#export CC ARM_CC MIPS_CC
 
 # Comment out to disable debug operation...
 DEBUG=-g -DDEBUG
@@ -122,7 +124,8 @@ $(NS_TARGET): $(OBJS_NS_CPP) $(OBJS_NS) endian.h
 
 # Kernel module:
 kaodv: 
-	$(MAKE) -C $(AODVDIR)/lnx KERNEL_DIR=$(KERNEL_DIR) KCC=$(CC) XDEFS=$(XDEFS)
+	#$(MAKE) -C $(AODVDIR)/lnx KERNEL_DIR=$(KERNEL_DIR) KCC=$(CC) XDEFS=$(XDEFS)
+	$(MAKE) -C $(AODVDIR)/lnx KERNEL_DIR=$(KERNEL_DIR) KCC=gcc XDEFS=$(XDEFS)
 
 kaodv-arm: 
 	$(MAKE) -C $(AODVDIR)/lnx KERNEL_DIR=$(KERNEL_DIR) KCC=$(ARM_CC) LD=$(ARM_LD) XDEFS=$(XDEFS) kaodv-arm

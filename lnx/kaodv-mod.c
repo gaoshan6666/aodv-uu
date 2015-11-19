@@ -16,16 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * Author: Erik Nordström, <erik.nordstrom@it.uu.se>
+ * Author: Erik Nordstrï¿½m, <erik.nordstrom@it.uu.se>
  * 
  *****************************************************************************/
 #include <linux/version.h>
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,19))
 #include <linux/config.h>
 #endif
-#ifdef KERNEL26
+
 #include <linux/moduleparam.h>
-#endif
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -71,8 +70,8 @@ int active_route_timeout = 3000;
 //static unsigned int loindex = 0;
 
 MODULE_DESCRIPTION
-    ("AODV-UU kernel support. © Uppsala University & Ericsson AB");
-MODULE_AUTHOR("Erik Nordström");
+    ("AODV-UU kernel support. ï¿½ Uppsala University & Ericsson AB");
+MODULE_AUTHOR("Erik Nordstrï¿½m");
 #ifdef MODULE_LICENSE
 MODULE_LICENSE("GPL");
 #endif
@@ -280,7 +279,7 @@ int kaodv_proc_info(char *buffer, char **start, off_t offset, int length)
  * Called when the module is inserted in the kernel.
  */
 static char *ifname[MAX_INTERFACES] = { "eth0" };
-
+/*
 #ifdef KERNEL26
 static int num_parms = 0;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,10))
@@ -293,37 +292,41 @@ module_param(qual_th, int, 0);
 MODULE_PARM(ifname, "1-" __MODULE_STRING(MAX_INTERFACES) "s");
 MODULE_PARM(qual_th, "i");
 #endif
+*/
+static int num_parms = 0;
+module_param_array(ifname, charp, &num_parms, 0444);
+module_param(qual_th, int, 0);
 
 static struct nf_hook_ops kaodv_ops[] = {
 	{
 	 .hook = kaodv_hook,
-#ifdef KERNEL26
+//#ifdef KERNEL26
 	 .owner = THIS_MODULE,
-#endif
+//#endif
 	 .pf = PF_INET,
 	 .hooknum = NF_INET_PRE_ROUTING,
 	 .priority = NF_IP_PRI_FIRST,
 	 },
 	{
 	 .hook = kaodv_hook,
-#ifdef KERNEL26
+//#ifdef KERNEL26
 	 .owner = THIS_MODULE,
-#endif
+//#endif
 	 .pf = PF_INET,
 	 .hooknum = NF_INET_LOCAL_OUT,
 	 .priority = NF_IP_PRI_FILTER,
 	 },
 	{
 	 .hook = kaodv_hook,
-#ifdef KERNEL26
+//#ifdef KERNEL26
 	 .owner = THIS_MODULE,
-#endif
+//#endif
 	 .pf = PF_INET,
 	 .hooknum = NF_INET_POST_ROUTING,
 	 .priority = NF_IP_PRI_FILTER,
 	 },
 };
-
+/*
 static int kaodv_read_proc(char *page, char **start, off_t off, int count,
                     int *eof, void *data)
 {
@@ -340,17 +343,53 @@ static int kaodv_read_proc(char *page, char **start, off_t off, int count,
     else if (len < 0)
         len = 0;
     return len;
+}*/
+
+static int kaodv_proc_open(struct inode *inode, struct file *file)
+{
+        int (*show)(struct seq_file *, void *) = PDE_DATA(inode);
+        return single_open(file, show, NULL);
 }
+
+static const struct file_operations kaodv_proc_fops = {
+	.open           = kaodv_proc_open,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+	.release        = single_release,
+};
+
+//https://groups.google.com/forum/#!topic/fa.linux.kernel/5o6yX-0omnI
+//http://tuxthink.blogspot.com/2013/10/creating-read-only-proc-entry-in-kernel.html
+static int kaodv_read_proc(struct seq_file *m, void *v)
+{
+
+    seq_printf(m,
+        "qual threshold=%d\npkts dropped=%lu\nlast qual=%d\ngateway_mode=%d\n",
+        qual_th, pkts_dropped, qual, is_gateway);
+
+    return 0;
+}
+
+/*
+ * Table of proc files we need to create.
+ */
+struct kaodv_proc_file {
+	char name[12];
+	int (*show)(struct seq_file *, void *);
+};
+
+static const struct kaodv_proc_file kaodv_proc_files[] = {
+	{ "kaodv",   &kaodv_read_proc },
+	{ "" }
+};
+
 
 
 static int __init kaodv_init(void)
 {
 	struct net_device *dev = NULL;
 	int i, ret = -ENOMEM;
-
-#ifndef KERNEL26
-	EXPORT_NO_SYMBOLS;
-#endif
+	const struct kaodv_proc_file *f;
 
 	kaodv_expl_init();
 
@@ -399,9 +438,16 @@ static int __init kaodv_init(void)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc_net_create("kaodv", 0, kaodv_proc_info);
 #else
-    if (!create_proc_read_entry("kaodv", 0, init_net.proc_net, kaodv_read_proc,
-                            NULL))
-        KAODV_DEBUG("Could not create kaodv proc entry");
+//    if (!create_proc_read_entry("kaodv", 0, init_net.proc_net, kaodv_read_proc,
+//                            NULL))
+//	if (!proc_create("kaodv", 0, init_net.proc_net, &kaodv_fops))
+//        KAODV_DEBUG("Could not create kaodv proc entry");
+	for (f = kaodv_proc_files; f->name[0]; f++) {
+		if (!proc_create_data(f->name, 0, init_net.proc_net,
+				&kaodv_proc_fops, f->show)) {
+			KAODV_DEBUG("Could not create kaodv proc entry");
+		}
+	}
 #endif
 	KAODV_DEBUG("Module init OK");
 
@@ -433,7 +479,8 @@ static void __exit kaodv_exit(void)
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,24))
 	proc_net_remove("kaodv");
 #else
-	proc_net_remove(&init_net, "kaodv");
+	//proc_net_remove(&init_net, "kaodv");
+	remove_proc_entry("kaodv", init_net.proc_net);
 #endif
 	kaodv_queue_fini();
 	kaodv_expl_fini();
