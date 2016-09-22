@@ -22,7 +22,7 @@ OBJS_NS_CPP = $(SRC_NS_CPP:%.cc=%-ns.o)
 KERNEL=3.10.17-yocto-standard
 # Change to compile against different kernel (can be overridden):
 #KERNEL_DIR=/lib/modules/$(KERNEL)/build
-KERNEL_DIR=/home/wu/Desktop/edison/kernel/linux-edison-standard-build
+KERNEL_DIR=/home/wu/Desktop/galileo/802.11p-linux
 KERNEL_INC=$(KERNEL_DIR)/include
 
 # Compiler and options:

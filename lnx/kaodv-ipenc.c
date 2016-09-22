@@ -106,7 +106,7 @@ struct sk_buff *ip_pkt_encapsulate(struct sk_buff *skb, __u32 dest)
     if (iph->id == 0)
     	//http://openvswitch.org/pipermail/dev/2014-November/048205.html
 //	    ip_select_ident(iph, skb_dst(skb), NULL);
-    	ip_select_ident(skb, skb_dst(skb), NULL);
+    	ip_select_ident(skb, NULL);
         
     return skb;
 }

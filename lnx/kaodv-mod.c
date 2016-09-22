@@ -123,7 +123,7 @@ void kaodv_update_route_timeouts(int hooknum, const struct net_device *dev,
 	}
 }
 
-static unsigned int kaodv_hook(unsigned int hooknum,
+static unsigned int kaodv_hook(const struct nf_hook_ops *ops,
 			       struct sk_buff *skb,
 			       const struct net_device *in,
 			       const struct net_device *out,
@@ -133,6 +133,7 @@ static unsigned int kaodv_hook(unsigned int hooknum,
 	struct expl_entry e;
 	struct in_addr ifaddr, bcaddr;
 	int res = 0;
+	int hooknum = ops->hooknum;
 
 	memset(&ifaddr, 0, sizeof(struct in_addr));
 	memset(&bcaddr, 0, sizeof(struct in_addr));

@@ -1,0 +1,40 @@
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o main.o main.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o list.o list.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o debug.o debug.c
+debug.c: In function 'print_rt_table':
+debug.c:349:13: warning: variable 'written' set but not used [-Wunused-but-set-variable]
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o timer_queue.o timer_queue.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_socket.o aodv_socket.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_hello.o aodv_hello.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_neighbor.o aodv_neighbor.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_timeout.o aodv_timeout.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o routing_table.o routing_table.c
+routing_table.c: In function 'rt_table_insert':
+routing_table.c:92:17: warning: variable 'nm' set but not used [-Wunused-but-set-variable]
+routing_table.c: In function 'rt_table_update':
+routing_table.c:196:17: warning: variable 'nm' set but not used [-Wunused-but-set-variable]
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o seek_list.o seek_list.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_rreq.o aodv_rreq.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_rrep.o aodv_rrep.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o aodv_rerr.o aodv_rerr.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o nl.o nl.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -c -o locality.o locality.c
+i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux -Wall -O3 -g -DDEBUG -DCONFIG_GATEWAY  -DDEBUG -o aodvd main.o list.o debug.o timer_queue.o aodv_socket.o aodv_hello.o aodv_neighbor.o aodv_timeout.o routing_table.o seek_list.o aodv_rreq.o aodv_rrep.o aodv_rerr.o nl.o locality.o 
+#make -C /home/wu/Desktop/galileo/aodv-uu/lnx KERNEL_DIR=/home/wu/Desktop/galileo/802.11p-linux KCC=i586-poky-linux-gcc  -m32 -march=i586 --sysroot=/home/wu/Desktop/galileo/toolchain/sysroots/i586-poky-linux XDEFS=-DDEBUG
+make -C /home/wu/Desktop/galileo/aodv-uu/lnx KERNEL_DIR=/home/wu/Desktop/galileo/802.11p-linux KCC=gcc XDEFS=-DDEBUG
+make[1]: Entering directory `/home/wu/Desktop/galileo/aodv-uu/lnx'
+make	-C /home/wu/Desktop/galileo/802.11p-linux SUBDIRS=/home/wu/Desktop/galileo/aodv-uu/lnx modules 
+make[2]: Entering directory `/home/wu/Desktop/galileo/802.11p-linux'
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-mod.o
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-debug.o
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-netlink.o
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-queue.o
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-ipenc.o
+  CC [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv-expl.o
+  LD [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  CC      /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv.mod.o
+  LD [M]  /home/wu/Desktop/galileo/aodv-uu/lnx/kaodv.ko
+make[2]: Leaving directory `/home/wu/Desktop/galileo/802.11p-linux'
+make[1]: Leaving directory `/home/wu/Desktop/galileo/aodv-uu/lnx'

@@ -381,8 +381,8 @@ static int init_or_cleanup(int init)
 	//proc = create_proc_read_entry(KAODV_QUEUE_PROC_FS_NAME, 0, init_net.proc_net, kaodv_queue_get_info, NULL);
 	//proc = proc_create(KAODV_QUEUE_PROC_FS_NAME, 0, init_net.proc_net, kaodv_queue_get_info);
 	for (f = kaodv_queue_proc_files; f->name[0]; f++) {
-		if (!proc_create_data(f->name, 0, init_net.proc_net,
-				&kaodv_queue_proc_fops, f->show)) {
+		if (!(proc = proc_create_data(f->name, 0, init_net.proc_net,
+				&kaodv_queue_proc_fops, f->show))) {
 			KAODV_DEBUG("Could not create kaodv queue proc entry");
 		}
 	}
